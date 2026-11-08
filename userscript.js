@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          LibreGRAB
 // @namespace     http://tampermonkey.net/
-// @version       2026-10-31
+// @version       2026-11-08
 // @description   Download all the booty!
 // @author        PsychedelicPalimpsest
 // @license       MIT
@@ -13,8 +13,8 @@
 // @run-at        document-start
 // @icon          https://www.google.com/s2/favicons?sz=64&domain=libbyapp.com
 // @grant         none
-// @downloadURL https://update.greasyfork.org/scripts/498782/LibreGRAB.user.js
-// @updateURL https://update.greasyfork.org/scripts/498782/LibreGRAB.meta.js
+// @downloadURL https://raw.githubusercontent.com/theGAXman/LibbyRip/fix/listen-player-integrity/userscript.js
+// @updateURL https://raw.githubusercontent.com/theGAXman/LibbyRip/fix/listen-player-integrity/userscript.js
 // ==/UserScript==
 
 // Chrome (Tampermonkey/MV3) runs userscripts in an isolated JS world, meaning
