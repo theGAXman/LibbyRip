@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          LibreGRAB
 // @namespace     http://tampermonkey.net/
-// @version       2026-11-08.2
+// @version       2026-11-08.4
 // @description   Download all the booty!
 // @author        PsychedelicPalimpsest
 // @license       MIT
@@ -25,9 +25,9 @@
 
 (function () {
     const clientZipReadyCode = `
-window.__libregrabClientZipReady = new Promise((resolve, reject) => {
-    window.__libregrabResolveClientZip = resolve;
-    window.__libregrabRejectClientZip = reject;
+window.__lgczReady = new Promise((resolve, reject) => {
+    window.__lgczResolve = resolve;
+    window.__lgczReject = reject;
 });
 `;
     function mainCode() {
@@ -55,7 +55,7 @@ window.__libregrabClientZipReady = new Promise((resolve, reject) => {
     let BIF;
     async function getDownloadZip() {
         if (window.downloadZip) return window.downloadZip;
-        if (window.__libregrabClientZipReady) return window.__libregrabClientZipReady;
+        if (window.__lgczReady) return window.__lgczReady;
         throw new Error("client-zip did not load");
     }
     const CSS = `
@@ -671,7 +671,7 @@ window.__libregrabClientZipReady = new Promise((resolve, reject) => {
                 const src = Function.prototype.toString.call(this);
                 if (src.includes('decryption') ||
                     args.some(arg => typeof arg === 'function' && Function.prototype.toString.call(arg).includes('decryption'))) {
-                    window.__libregrab_decryption_fn = args.find(arg => typeof arg === 'function');
+                    window.__lgczDecrypt = args.find(arg => typeof arg === 'function');
                 }
             } catch (e) {}
             return boundFn;
@@ -1199,9 +1199,9 @@ window.__libregrabClientZipReady = new Promise((resolve, reject) => {
             } else {
                 console.warn("Bind args not found, trying alternative decryption method");
                 // Try global decryption function if available
-                if (window.__libregrab_decryption_fn) {
+                if (window.__lgczDecrypt) {
                     try {
-                        pages[win.name] = window.__libregrab_decryption_fn(edata);
+                        pages[win.name] = window.__lgczDecrypt(edata);
                     } catch (error) {
                         console.error("Global decryption function failed:", error);
                     }
@@ -1287,10 +1287,10 @@ window.__libregrabClientZipReady = new Promise((resolve, reject) => {
     fetch('https://unpkg.com/client-zip@2.5.0/worker.js')
         .then(r => r.text())
         .then(clientZipCode => {
-            injectPageScript(clientZipCode + ';\nwindow.__libregrabResolveClientZip?.(window.downloadZip);');
+            injectPageScript(clientZipCode + ';\nwindow.__lgczResolve?.(window.downloadZip);');
         })
         .catch(error => {
             console.error('LibreGRAB: failed to load client-zip', error);
-            injectPageScript('window.__libregrabRejectClientZip?.(new Error("client-zip failed to load"));');
+            injectPageScript('window.__lgczReject?.(new Error("client-zip failed to load"));');
         });
 })();
