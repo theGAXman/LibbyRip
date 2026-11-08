@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          LibreGRAB
 // @namespace     http://tampermonkey.net/
-// @version       2026-11-08
+// @version       2026-11-08.1
 // @description   Download all the booty!
 // @author        PsychedelicPalimpsest
 // @license       MIT
