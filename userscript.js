@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          LibreGRAB
 // @namespace     http://tampermonkey.net/
-// @version       2026-11-08.5
+// @version       2026-11-08.6
 // @description   Download all the booty!
 // @author        PsychedelicPalimpsest
 // @license       MIT
@@ -55,6 +55,7 @@ window.__lgczReady = new Promise((resolve, reject) => {
     let BIF;
     async function getDownloadZip() {
         if (window.downloadZip) return window.downloadZip;
+        document.documentElement.dataset.lgczWant = "1";
         if (window.__lgczReady) return window.__lgczReady;
         throw new Error("client-zip did not load");
     }
@@ -642,7 +643,7 @@ window.__lgczReady = new Promise((resolve, reject) => {
         mergePerformanceMediaUrls();
         // UI no longer depends on -odread-cmpt-params; export captures player URLs.
         buildPirateUi();
-        initFFmpeg().catch(console.error);
+        // Do not load FFmpeg on open. The 50MB script injection bounces the player.
     }
 
 
@@ -1290,13 +1291,24 @@ window.__lgczReady = new Promise((resolve, reject) => {
 
     injectPageScript(`${clientZipReadyCode}(${mainCode.toString()})();`);
 
-    fetch('https://unpkg.com/client-zip@2.5.0/worker.js')
-        .then(r => r.text())
-        .then(clientZipCode => {
-            injectPageScript(clientZipCode + ';\nwindow.__lgczResolve?.(window.downloadZip);');
-        })
-        .catch(error => {
-            console.error('LibreGRAB: failed to load client-zip', error);
-            injectPageScript('window.__lgczReject?.(new Error("client-zip failed to load"));');
-        });
+    // client-zip injection is visible to the player. Load it only when an export asks.
+    function loadClientZip() {
+        if (loadClientZip.started) return;
+        loadClientZip.started = true;
+        fetch('https://unpkg.com/client-zip@2.5.0/worker.js')
+            .then(r => r.text())
+            .then(clientZipCode => {
+                injectPageScript(clientZipCode + ';\nwindow.__lgczResolve?.(window.downloadZip);');
+            })
+            .catch(error => {
+                console.error('LibreGRAB: failed to load client-zip', error);
+                injectPageScript('window.__lgczReject?.(new Error("client-zip failed to load"));');
+            });
+    }
+    const zipWait = setInterval(() => {
+        if (document.documentElement && document.documentElement.dataset.lgczWant === "1") {
+            clearInterval(zipWait);
+            loadClientZip();
+        }
+    }, 200);
 })();
