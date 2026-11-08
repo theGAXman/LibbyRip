@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name          LibreGRAB
 // @namespace     http://tampermonkey.net/
-// @version       2026-11-08.4
+// @version       2026-11-08.5
 // @description   Download all the booty!
 // @author        PsychedelicPalimpsest
 // @license       MIT
@@ -227,24 +227,30 @@ window.__lgczReady = new Promise((resolve, reject) => {
     }
     let firstChapClick = true;
     function viewChapters(){
-        // Populate chapters ONLY after first viewing
+        // Populate chapters ONLY after first viewing.
+        // Do not set audio src to unsigned part URLs. The listen host treats
+        // those GETs as abuse and navigates to terms-and-conditions.
         if (firstChapClick){
             firstChapClick = false;
-            for (let url of getUrls()){
+            const toc = (BIF.map && BIF.map.nav && BIF.map.nav.toc) || [];
+            const rows = toc.length
+                ? toc.map(ch => ({ label: ch.title || "Chapter", url: null }))
+                : getUrls().map(url => ({ label: "#" + (1 + url.index), url }));
+            for (let row of rows){
                 let span = document.createElement("span");
                 span.classList.add("pChapLabel")
-                span.textContent = "#" + (1 + url.index);
-
-                let audio = document.createElement("audio");
-                audio.setAttribute("controls", "");
-                let source = document.createElement("source");
-                source.setAttribute("src", url.url);
-                source.setAttribute("type", url.type);
-                audio.appendChild(source);
-
+                span.textContent = row.label;
                 chapterMenuElem.appendChild(span);
                 chapterMenuElem.appendChild(document.createElement("br"));
-                chapterMenuElem.appendChild(audio);
+                if (row.url && urlLooksSigned(row.url)) {
+                    let audio = document.createElement("audio");
+                    audio.setAttribute("controls", "");
+                    let source = document.createElement("source");
+                    source.setAttribute("src", row.url.url);
+                    source.setAttribute("type", row.url.type);
+                    audio.appendChild(source);
+                    chapterMenuElem.appendChild(audio);
+                }
                 chapterMenuElem.appendChild(document.createElement("br"));
             }
         }
